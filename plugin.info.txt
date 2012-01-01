@@ -1,0 +1,7 @@
+base   pdfimg
+author Rob
+email  robert@irrelevant.com
+date   2011-11-27
+name   pdfimg plugin
+desc   Image with download links for a PDF file
+url    http://www.irrelevant.com/docuwiki/
