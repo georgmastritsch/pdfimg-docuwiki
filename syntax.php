@@ -2,7 +2,7 @@
 /**
  * PDF Image Link plugin - links to a PDF file with a thumbnail.
  *
- * Version 0.1 trial version.
+ * Version 0.2 trial version.
  *
  * Syntax:	[PDFIMG filename.pdf?size&option&option|optional subtitle]
  *
@@ -174,6 +174,7 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
 
         global $conf;
         global $INFO;
+    	global $ID;
 
     	$nodownload = FALSE;
     	$noonline = FALSE;
@@ -208,15 +209,24 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
           case DOKU_LEXER_UNMATCHED :
 //          	$path = $this->getConf('mediadir') . "/" . $INFO['namespace'] . "/" . $match;
 */
+		$pdf = str_replace(':','/',$pdf);				// doc requested
+    	$ns = dirname(str_replace(':','/',$ID));		// current namespace?
+    	if($ns == '.') $ns ='';							// or none
+    	$ns  = utf8_encodeFN(str_replace(':','/',$ns));
 
-        $path = $conf['mediadir'];
-        list($ns, $fn) = preg_split("/\:/u", $pdf, 2);
+    	if ($pdf{0} == '/') {
+    		$pdf = substr($pdf,1);
+    	} else if ($ns != '') $pdf = $ns . "/" . $pdf;
+
+    	$rob_file = $conf['mediadir']."/".$pdf;
+
+		/*		list($ns, $fn) = preg_split("/\:/u", $pdf, 2);
         if (empty($fn)) {
             $fn = $ns;
             $ns = $INFO['namespace'];
         }
         $rob_file = $path . "/" . $ns . "/" . $fn;
-
+ */
         if (!file_exists($rob_file)) return array($state, array('', '', '', '', "Missing PDF - $rob_file"));
 
         $rob_ptime = filectime($rob_file);
@@ -255,7 +265,7 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
         // $content = "{{:$ns:$fn|{{:$ns:$fn.png|}}}}";
         // $handler->media($content, $state, $pos);
         // break; //
-        return array($state, array($rob_file, $rob_out, $ns, $fn, $subtitle, $nodownload, $noonline));
+        return array($state, array($rob_file, $rob_out, '', $pdf, $subtitle, $nodownload, $noonline));
         /*
           case DOKU_LEXER_EXIT :
           	return array($state, '');
@@ -300,27 +310,27 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
 
         		case DOKU_LEXER_UNMATCHED :
 */
-            list($fnpdf, $fnimg, $ns, $fn, $subtitle, $nodownload, $noonline) = $match;
+            list($fnpdf, $fnimg, $ns, $pdf, $subtitle, $nodownload, $noonline) = $match;
 
         	if ($fnpdf == '') {
         		$content = "<div class=\"pdferror\">Error: $subtitle</div>";
         	} else {
 
             // $content = "[[this>_media/$ns:$fn|{{"."$ns:$fn.png?size}}]]";
-	            $dl = "/lib/exe/fetch.php/$ns/$fn";
-        		$vw= "/lib/exe/pdfview.php/$ns/$fn";
+	            $dl = "/lib/exe/fetch.php/$pdf"; //$ns/$fn";
+        		$vw= "/lib/exe/pdfview.php/$pdf"; //$ns/$fn";
 
-	            $content = "<div class=\"pdfimg__main\"><img src=\"$dl.png\">";
+	            $content = "<div class=\"pdfimg__main\"><table><tr><td><img src=\"$dl.png\"></td></tr>";
 	            if ($subtitle != "") {
-	                $content .= "<div class=\"pdfimg__caption\">$subtitle</div>";
+	                $content .= "<tr><td class=\"pdfimg__caption\">$subtitle</td></tr>";
 	            }
-	            if (!$nodownload || !$noonline) 	$content .= "<div class=\"pdfimg__links\"><small>";
+	            if (!$nodownload || !$noonline) 	$content .= "<tr><td class=\"pdfimg__links\"><small>";
 				if (!$nodownload) 					$content .= "<a href=\"$dl\">Download PDF</a>";
         		if (!$nodownload && !$noonline) 	$content .= " - ";
         		if (!$noonline) 					$content .= "<a href=\"$vw\">View Online</a>";
-				if (!$nodownload || !$noonline) 	$content .= "</small></div>";
+				if (!$nodownload || !$noonline) 	$content .= "</small></td></tr>";
 
-	            $content .= "</div>";
+	            $content .= "</table></div>";
         	}
 
             $renderer->doc .= $content;

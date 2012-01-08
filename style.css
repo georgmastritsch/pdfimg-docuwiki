@@ -1,5 +1,8 @@
 
-#pdfcaption {
+.pdfimg__main table { float: left;
+                 margin: 0 5px 20px 0; }
+
+.pdfimg__caption {
 	margin:6px 3px 0px 3px;
 	text-align:justify;
 	font-size:0.9em;
