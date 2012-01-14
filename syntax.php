@@ -5,6 +5,7 @@
  * Version 0.2 trial version.
  *
  * Syntax:	[PDFIMG filename.pdf?size&option&option|optional subtitle]
+ * 			[PDFIMG< filename... or [PDFIMG> filename.. to float left or right
  *
  * size:	standard image size options  (not currently supported)
  * options: nodownload - suppress download link
@@ -131,6 +132,8 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
     {
 
         $this->Lexer->addSpecialPattern('\[PDFIMG.+?\]', $mode, 'plugin_pdfimg');
+    	$this->Lexer->addSpecialPattern('\[PDFIMG\<.+?\]', $mode, 'plugin_pdfimg');
+    	$this->Lexer->addSpecialPattern('\[PDFIMG\>.+?\]', $mode, 'plugin_pdfimg');
 
     }
 
@@ -178,8 +181,16 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
 
     	$nodownload = FALSE;
     	$noonline = FALSE;
+		// [PDFIMG filename or [PDFIMG> filename or  [PDFIMG< filename
+    	$floatmode = substr($match,7,1);
+    	if (($fm = strpos("<>",$floatmode))=== FALSE) {
+    		$floatmode = "";
+    		$match = substr($match, 8, -1); //strip markup
+    	} else {
+    		$floatmode = $fm==1 ? "right" : "left";
+    		$match = substr($match, 9, -1); //strip markup
+    	}
 
-        $match = substr($match, 8, -1); //strip markup
         $params = preg_split('/(?<!\\\\)\|/', $match);
         $pdf = $params[0];
     	if (($of = strpos($pdf, '?'))!== FALSE) {		// yes, that's an asignment in there!!!
@@ -219,6 +230,7 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
     	} else if ($ns != '') $pdf = $ns . "/" . $pdf;
 
     	$rob_file = $conf['mediadir']."/".$pdf;
+		$rob_out =  $conf['mediadir']."/". utf8_strtolower($pdf).".png";
 
 		/*		list($ns, $fn) = preg_split("/\:/u", $pdf, 2);
         if (empty($fn)) {
@@ -231,7 +243,6 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
 
         $rob_ptime = filectime($rob_file);
 
-        $rob_out = $rob_file . ".png";
         if (file_exists($rob_out)) {
             $rob_ctime = filectime($rob_out);
         } else {
@@ -265,7 +276,7 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
         // $content = "{{:$ns:$fn|{{:$ns:$fn.png|}}}}";
         // $handler->media($content, $state, $pos);
         // break; //
-        return array($state, array($rob_file, $rob_out, '', $pdf, $subtitle, $nodownload, $noonline));
+        return array($state, array($rob_file, $rob_out, '', $pdf, $subtitle, $nodownload, $noonline, $floatmode));
         /*
           case DOKU_LEXER_EXIT :
           	return array($state, '');
@@ -310,27 +321,45 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
 
         		case DOKU_LEXER_UNMATCHED :
 */
-            list($fnpdf, $fnimg, $ns, $pdf, $subtitle, $nodownload, $noonline) = $match;
+            list($fnpdf, $fnimg, $ns, $pdf, $subtitle, $nodownload, $noonline, $floatmode) = $match;
 
         	if ($fnpdf == '') {
-        		$content = "<div class=\"pdferror\">Error: $subtitle</div>";
+        		$content = "<div class=\"pdfimg__error\">Error: $subtitle</div>";
         	} else {
 
             // $content = "[[this>_media/$ns:$fn|{{"."$ns:$fn.png?size}}]]";
 	            $dl = "/lib/exe/fetch.php/$pdf"; //$ns/$fn";
-        		$vw= "/lib/exe/pdfview.php/$pdf"; //$ns/$fn";
-
-	            $content = "<div class=\"pdfimg__main\"><table><tr><td><img src=\"$dl.png\"></td></tr>";
+        		$vw = "/lib/exe/pdfview.php/$pdf"; //$ns/$fn";
+				$im = "/lib/exe/fetch.php/". utf8_strtolower($pdf).".png";
+/*
+	            $content = "<span class=\"pdfimg__main$floatmode\"";
+//        		if ($floatmode != "") $content .= " align=\"$floatmode\"";
+				$content .= "><table><tr><td><img src=\"$im\"></td></tr>";
 	            if ($subtitle != "") {
 	                $content .= "<tr><td class=\"pdfimg__caption\">$subtitle</td></tr>";
 	            }
-	            if (!$nodownload || !$noonline) 	$content .= "<tr><td class=\"pdfimg__links\"><small>";
+	            if (!$nodownload || !$noonline) 	$content .= "<tr><td class=\"pdfimg__links\">";
 				if (!$nodownload) 					$content .= "<a href=\"$dl\">Download PDF</a>";
         		if (!$nodownload && !$noonline) 	$content .= " - ";
         		if (!$noonline) 					$content .= "<a href=\"$vw\">View Online</a>";
-				if (!$nodownload || !$noonline) 	$content .= "</small></td></tr>";
+				if (!$nodownload || !$noonline) 	$content .= "</td></tr>";
 
-	            $content .= "</table></div>";
+	            $content .= "</table></span>";
+*/
+        		$content = "<span class=\"pdfimg__main$floatmode\""; //style=\"width:200px\"";
+//        		if ($floatmode != "") $content .= " align=\"$floatmode\"";
+        		$content .= "><img src=\"$im\">";
+        		if ($subtitle != "") {
+        			$content .= "<br /><span class=\"pdfimg__caption\">$subtitle</span>";
+        		}
+        		if (!$nodownload || !$noonline) 	$content .= "<br /><span class=\"pdfimg__links\">";
+        		if (!$nodownload) 					$content .= "<a href=\"$dl\">Download PDF</a>";
+        		if (!$nodownload && !$noonline) 	$content .= " - ";
+        		if (!$noonline) 					$content .= "<a href=\"$vw\">View Online</a>";
+        		if (!$nodownload || !$noonline) 	$content .= "</span>";
+
+        		$content .= "</span>";
+
         	}
 
             $renderer->doc .= $content;

@@ -1,10 +1,26 @@
 
-.pdfimg__main table { float: left;
-                 margin: 0 5px 20px 0; }
+.pdfimg__mainteft { float: left;
+                 margin: 0 15px 20px 0; }
+.pdfimg__mainright { float: right;
+                 margin: 0 0 20px 15px; }
+.pdfimg__main {
+                 margin: 0 15px 20px 15px; }
 
 .pdfimg__caption {
 	margin:6px 3px 0px 3px;
-	text-align:justify;
+	text-align:center;
 	font-size:0.9em;
 	line-height:1.1em;
 }
+
+.pdfimg__links {
+	margin:6px 3px 0px 3px;
+	text-align:center;
+	font-size:0.9em;
+	line-height:1.1em;
+}
+/*
+div.dokuwiki p {
+	clear:both;
+}
+*/
