@@ -2,11 +2,12 @@
 /**
  * PDF Image Link plugin - links to a PDF file with a thumbnail.
  *
- * Version 0.2 trial version.
+ * Version 0.4 trial version.
  *
  * Syntax:	[PDFIMG filename.pdf?size&option&option|optional subtitle]
  * 			[PDFIMG< filename... or [PDFIMG> filename.. to float left or right
- *
+ *			[PDFIMGX] clear float.
+ *   *
  * size:	standard image size options  (not currently supported)
  * options: nodownload - suppress download link
  * 			noonline - suppress view-online link (default)
@@ -134,7 +135,7 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
         $this->Lexer->addSpecialPattern('\[PDFIMG.+?\]', $mode, 'plugin_pdfimg');
     	$this->Lexer->addSpecialPattern('\[PDFIMG\<.+?\]', $mode, 'plugin_pdfimg');
     	$this->Lexer->addSpecialPattern('\[PDFIMG\>.+?\]', $mode, 'plugin_pdfimg');
-
+		$this->Lexer->addSpecialPattern('\[PDFIMGX\]', $mode, 'plugin_pdfimg');
     }
 
 /*    function postConnect()
@@ -183,7 +184,13 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
     	$noonline = FALSE;
 		// [PDFIMG filename or [PDFIMG> filename or  [PDFIMG< filename
     	$floatmode = substr($match,7,1);
-    	if (($fm = strpos("<>",$floatmode))=== FALSE) {
+
+    	if ($floatmode == "X") {
+    		return array($state, array('', '', '', '', '', '', '', 'clear'));
+    	}
+
+
+    	if (($fm = strpos("<>X",$floatmode))=== FALSE) {
     		$floatmode = "";
     		$match = substr($match, 8, -1); //strip markup
     	} else {
@@ -230,7 +237,7 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
     	} else if ($ns != '') $pdf = $ns . "/" . $pdf;
 
     	$rob_file = $conf['mediadir']."/".$pdf;
-		$rob_out =  $conf['mediadir']."/". utf8_strtolower($pdf).".png";
+		$rob_out =  $conf['mediadir']."/". str_replace(" ","_",utf8_strtolower($pdf)).".png";
 
 		/*		list($ns, $fn) = preg_split("/\:/u", $pdf, 2);
         if (empty($fn)) {
@@ -324,28 +331,33 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
             list($fnpdf, $fnimg, $ns, $pdf, $subtitle, $nodownload, $noonline, $floatmode) = $match;
 
         	if ($fnpdf == '') {
-        		$content = "<div class=\"pdfimg__error\">Error: $subtitle</div>";
+				if ($floatmode == "clear") {
+					$content = "<br style=\"clear: both\">";
+				} else {
+	        		$content = "<div class=\"pdfimg__error\">Error: $subtitle</div>";
+				}
         	} else {
 
             // $content = "[[this>_media/$ns:$fn|{{"."$ns:$fn.png?size}}]]";
 	            $dl = "/lib/exe/fetch.php/$pdf"; //$ns/$fn";
         		$vw = "/lib/exe/pdfview.php/$pdf"; //$ns/$fn";
 				$im = "/lib/exe/fetch.php/". utf8_strtolower($pdf).".png";
-/*
-	            $content = "<span class=\"pdfimg__main$floatmode\"";
+
+	            $content = "<div class=\"pdfimg__main$floatmode\"";
 //        		if ($floatmode != "") $content .= " align=\"$floatmode\"";
-				$content .= "><table><tr><td><img src=\"$im\"></td></tr>";
+				$content .= "><table>";
 	            if ($subtitle != "") {
-	                $content .= "<tr><td class=\"pdfimg__caption\">$subtitle</td></tr>";
+	                $content .= "<caption align=\"bottom\" class=\"pdfimg__caption\">$subtitle</caption>";
 	            }
-	            if (!$nodownload || !$noonline) 	$content .= "<tr><td class=\"pdfimg__links\">";
+        		$content .= "<tr><td><img src=\"$im\"></td></tr>";
+        		if (!$nodownload || !$noonline) 	$content .= "<tr><td class=\"pdfimg__links\">";
 				if (!$nodownload) 					$content .= "<a href=\"$dl\">Download PDF</a>";
         		if (!$nodownload && !$noonline) 	$content .= " - ";
         		if (!$noonline) 					$content .= "<a href=\"$vw\">View Online</a>";
 				if (!$nodownload || !$noonline) 	$content .= "</td></tr>";
 
-	            $content .= "</table></span>";
-*/
+	            $content .= "</table></div>";
+/*
         		$content = "<span class=\"pdfimg__main$floatmode\""; //style=\"width:200px\"";
 //        		if ($floatmode != "") $content .= " align=\"$floatmode\"";
         		$content .= "><img src=\"$im\">";
@@ -359,7 +371,7 @@ class syntax_plugin_pdfimg extends DokuWiki_Syntax_Plugin {
         		if (!$nodownload || !$noonline) 	$content .= "</span>";
 
         		$content .= "</span>";
-
+*/
         	}
 
             $renderer->doc .= $content;

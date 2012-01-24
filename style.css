@@ -1,9 +1,15 @@
 
-.pdfimg__mainteft { float: left;
+.pdfimg__mainleft { display:inline; }
+.pdfimg__mainright { display:inline; }
+.pdfimg__main { display:inline; }
+
+// margin: top right bottom left
+
+.pdfimg__mainleft table { float: left;
                  margin: 0 15px 20px 0; }
-.pdfimg__mainright { float: right;
+.pdfimg__mainright table { float: right;
                  margin: 0 0 20px 15px; }
-.pdfimg__main {
+.pdfimg__main table {
                  margin: 0 15px 20px 15px; }
 
 .pdfimg__caption {
